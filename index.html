@@ -1,0 +1,479 @@
+<style>
+  :root {
+    --bg:#F4F6F2; --surface:#FFFFFF; --surface-2:#EEF2EC; --ink:#15211B; --muted:#566A5F; --faint:#7E9186;
+    --emerald:#1B5E43; --gold:#9A6E1E; --border:#DBE3DC; --border-2:#C9D4CB;
+    --done:#1B7A4E; --done-bg:#DCEEE3; --wip:#9A6E1E; --wip-bg:#F3E8CE; --wait:#6E8075; --wait-bg:#E7EBE6;
+    --shadow:0 1px 2px rgba(20,40,30,.05), 0 6px 20px rgba(20,40,30,.05);
+    --serif: Georgia, "Playfair Display", "Iowan Old Style", "Times New Roman", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+    --mono: "SF Mono", "JetBrains Mono", "Cascadia Code", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#0A140F; --surface:#0F1D16; --surface-2:#13251C; --ink:#EFE7D6; --muted:#9DB0A4; --faint:#71857A;
+      --emerald:#4FB488; --gold:#D4AF6A; --border:#21332A; --border-2:#2C4335;
+      --done:#57C08C; --done-bg:#122C1F; --wip:#D4AF6A; --wip-bg:#2A2413; --wait:#8AA093; --wait-bg:#1A2A21;
+      --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg:#F4F6F2; --surface:#FFFFFF; --surface-2:#EEF2EC; --ink:#15211B; --muted:#566A5F; --faint:#7E9186;
+    --emerald:#1B5E43; --gold:#9A6E1E; --border:#DBE3DC; --border-2:#C9D4CB;
+    --done:#1B7A4E; --done-bg:#DCEEE3; --wip:#9A6E1E; --wip-bg:#F3E8CE; --wait:#6E8075; --wait-bg:#E7EBE6;
+    --shadow:0 1px 2px rgba(20,40,30,.05), 0 6px 20px rgba(20,40,30,.05);
+  }
+  :root[data-theme="dark"] {
+    --bg:#0A140F; --surface:#0F1D16; --surface-2:#13251C; --ink:#EFE7D6; --muted:#9DB0A4; --faint:#71857A;
+    --emerald:#4FB488; --gold:#D4AF6A; --border:#21332A; --border-2:#2C4335;
+    --done:#57C08C; --done-bg:#122C1F; --wip:#D4AF6A; --wip-bg:#2A2413; --wait:#8AA093; --wait-bg:#1A2A21;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 30px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .page { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 24px 96px; }
+  a { color: inherit; }
+  ::selection { background: var(--emerald); color: #fff; }
+
+  /* language switching — active language never hidden, keeps its own display */
+  .page[data-lang="uk"] .l-ru, .page[data-lang="uk"] .l-en { display: none; }
+  .page[data-lang="ru"] .l-uk, .page[data-lang="ru"] .l-en { display: none; }
+  .page[data-lang="en"] .l-uk, .page[data-lang="en"] .l-ru { display: none; }
+
+  .top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+  .top-in { max-width: 880px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .mark { font-family: var(--serif); font-size: 18px; font-weight: 600; letter-spacing: -.01em; }
+  .mark .u { color: var(--emerald); font-style: italic; }
+  .top-spacer { flex: 1; }
+  .langs { display: inline-flex; border: 1px solid var(--border-2); border-radius: 8px; overflow: hidden; }
+  .langs button { background: none; border: none; padding: 6px 11px; font-size: 12px; font-weight: 700; letter-spacing: .03em; color: var(--muted); cursor: pointer; font-family: var(--sans); }
+  .langs button + button { border-left: 1px solid var(--border-2); }
+  .langs button.on { background: var(--emerald); color: #fff; }
+  .langs button:not(.on):hover { color: var(--ink); background: var(--surface-2); }
+  .ghost { font-size: 13px; color: var(--muted); text-decoration: none; border: 1px solid var(--border-2); border-radius: 8px; padding: 6px 11px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .ghost:hover { border-color: var(--emerald); color: var(--ink); }
+  .toggle { background: none; border: 1px solid var(--border-2); border-radius: 8px; color: var(--muted); cursor: pointer; padding: 6px 9px; font-size: 14px; line-height: 1; }
+  .toggle:hover { border-color: var(--emerald); color: var(--ink); }
+
+  .hero { padding: 60px 0 12px; }
+  .eyebrow { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); font-weight: 700; margin: 0 0 18px; }
+  h1 { font-family: var(--serif); font-weight: 600; letter-spacing: -.02em; font-size: clamp(32px, 5.6vw, 50px); line-height: 1.1; margin: 0 0 18px; text-wrap: balance; }
+  h1 em { color: var(--emerald); font-style: italic; }
+  .lede { font-size: 19px; color: var(--muted); max-width: 62ch; margin: 0; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .tagi { font-size: 12.5px; color: var(--muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; }
+
+  section { margin-top: 54px; }
+  .sec-head { display: flex; align-items: baseline; gap: 14px; margin: 0 0 22px; }
+  .sec-n { font-family: var(--serif); font-size: 15px; color: var(--gold); font-variant-numeric: tabular-nums; border: 1px solid var(--border-2); border-radius: 8px; padding: 2px 9px; line-height: 1.5; }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 26px; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 26px 28px; box-shadow: var(--shadow); }
+  .card p { margin: 0 0 14px; }
+  .card p:last-child { margin-bottom: 0; }
+  .card strong { color: var(--ink); font-weight: 600; }
+  .lead-line { border-left: 3px solid var(--emerald); padding-left: 16px; font-size: 17.5px; }
+
+  .kv { display: grid; grid-template-columns: 168px 1fr; gap: 10px 20px; margin: 0; }
+  .kv dt { color: var(--gold); font-size: 13.5px; font-weight: 600; padding-top: 1px; }
+  .kv dd { margin: 0; color: var(--muted); }
+  .kv dd b { color: var(--ink); font-weight: 600; }
+  @media (max-width: 560px){ .kv { grid-template-columns: 1fr; gap: 2px 0; } .kv dt { margin-top: 12px; } }
+
+  ul.clean { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 13px; }
+  ul.clean li { padding-left: 26px; position: relative; color: var(--muted); }
+  ul.clean li b { color: var(--ink); font-weight: 600; }
+  ul.clean li::before { content: ""; position: absolute; left: 2px; top: 9px; width: 8px; height: 8px; border-radius: 2px; background: var(--emerald); }
+  code { font-family: var(--mono); font-size: .86em; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; color: var(--ink); }
+
+  .stages { display: flex; flex-direction: column; gap: 0; margin: 0; }
+  .stage { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 16px; padding: 15px 0; border-top: 1px solid var(--border); }
+  .stage:first-child { border-top: none; }
+  .stage .idx { font-family: var(--serif); font-variant-numeric: tabular-nums; font-size: 20px; color: var(--faint); text-align: center; }
+  .stage .b0 { display: block; font-weight: 600; color: var(--ink); font-size: 15.5px; }
+  .stage .s0 { font-size: 13.5px; color: var(--muted); }
+  .stage.here { background: linear-gradient(90deg, var(--wip-bg), transparent 70%); margin: 0 -16px; padding-left: 16px; padding-right: 16px; border-radius: 10px; border-top-color: transparent; }
+  .chip { font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .chip.done { color: var(--done); background: var(--done-bg); }
+  .chip.wip  { color: var(--wip);  background: var(--wip-bg); }
+  .chip.wait { color: var(--wait); background: var(--wait-bg); }
+  .milestone { margin: 16px 0 0; font-size: 13.5px; color: var(--muted); }
+  .milestone b { color: var(--emerald); }
+
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  @media (max-width: 680px){ .grid { grid-template-columns: 1fr; } }
+  .grp { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 20px 8px; box-shadow: var(--shadow); }
+  .grp h3 { margin: 0 0 4px; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+  .grp .grp-sub { font-size: 13px; color: var(--faint); margin: 0 0 12px; }
+  .links { display: flex; flex-direction: column; }
+  .doc { display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 10px 0; border-top: 1px solid var(--border); }
+  .doc:first-child { border-top: none; }
+  .doc:hover .doc-name { color: var(--emerald); }
+  .doc-name { color: var(--ink); font-size: 14.5px; flex: 1; }
+  .doc .ext { color: var(--faint); font-size: 12px; opacity: 0; transition: opacity .15s; }
+  .doc:hover .ext { opacity: 1; }
+  .kind { font-family: var(--mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border: 1px solid var(--border-2); border-radius: 5px; padding: 2px 6px; }
+  .kind.code { color: var(--emerald); border-color: color-mix(in srgb, var(--emerald) 40%, var(--border-2)); }
+
+  .ask { background: var(--surface-2); border: 1px solid var(--border); border-radius: 14px; padding: 24px 28px; }
+  .ask ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 11px; color: var(--muted); }
+  .ask ul li b { color: var(--ink); }
+  .ask-lead { margin: 0 0 16px; color: var(--ink); font-size: 16.5px; }
+  .ask-lead b { color: var(--emerald); font-weight: 600; }
+  .ask-end { margin: 16px 0 0; font-size: 13.5px; color: var(--faint); font-style: italic; }
+
+  .note { font-size: 13.5px; color: var(--muted); background: var(--wip-bg); border: 1px solid color-mix(in srgb, var(--gold) 30%, var(--border)); border-radius: 10px; padding: 13px 16px; margin-top: 22px; }
+  .note b { color: var(--ink); }
+
+  footer { margin-top: 60px; padding-top: 22px; border-top: 1px solid var(--border); font-size: 13px; color: var(--faint); display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--emerald); }
+  footer .dot { opacity: .5; }
+
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--emerald); outline-offset: 2px; border-radius: 6px; }
+  .reveal { opacity: 0; transform: translateY(8px); animation: rise .5s ease forwards; }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce){ .reveal { animation: none; opacity: 1; transform: none; } }
+</style>
+
+<div class="page" data-lang="uk">
+  <div class="top">
+    <div class="top-in">
+      <span class="mark">AI Coach <span class="u">Unlocker</span></span>
+      <span class="top-spacer"></span>
+      <div class="langs" role="group" aria-label="Мова / Язык / Language">
+        <button data-set="uk" class="on">УКР</button>
+        <button data-set="ru">РУС</button>
+        <button data-set="en">ENG</button>
+      </div>
+      <a class="ghost" href="https://github.com/iraank/ai-coach-unlocking" target="_blank" rel="noopener">↗ <span class="l-uk">Репозиторій</span><span class="l-ru">Репозиторий</span><span class="l-en">Repository</span></a>
+      <button class="toggle" id="tg" aria-label="Тема">◐</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <header class="hero reveal">
+      <p class="eyebrow"><span class="l-uk">Roadmap проєкту · підготовлено для Костянтина Карпушина</span><span class="l-ru">Roadmap проекта · подготовлено для Константина Карпушина</span><span class="l-en">Project roadmap · prepared for Konstantin Karpushyn</span></p>
+      <h1 class="l-uk">AI-коуч, який <em>ставить питання</em>, а не дає поради.</h1>
+      <h1 class="l-ru">AI-коуч, который <em>задаёт вопросы</em>, а не даёт советы.</h1>
+      <h1 class="l-en">An AI coach that <em>asks questions</em> instead of giving advice.</h1>
+      <p class="lede l-uk">Цифрова підтримка між живими коуч-сесіями за методом Unlocking. Один документ: що я хочу, як це влаштовано і що вже зроблено — з посиланнями на кожен файл проєкту.</p>
+      <p class="lede l-ru">Цифровая поддержка между живыми коуч-сессиями по методу Unlocking. Один документ: что я хочу, как это устроено и что уже сделано — со ссылками на каждый файл проекта.</p>
+      <p class="lede l-en">Digital support between live coaching sessions, built on the Unlocking method. One document: what I want, how it works, and what's already done — with links to every file in the project.</p>
+      <div class="meta-row l-uk"><span class="tagi">Next.js + Supabase + Claude</span><span class="tagi">Веб-застосунок</span><span class="tagi">Прототип V1 працює</span><span class="tagi">Приватний репозиторій</span></div>
+      <div class="meta-row l-ru"><span class="tagi">Next.js + Supabase + Claude</span><span class="tagi">Веб-приложение</span><span class="tagi">Прототип V1 работает</span><span class="tagi">Приватный репозиторий</span></div>
+      <div class="meta-row l-en"><span class="tagi">Next.js + Supabase + Claude</span><span class="tagi">Web app</span><span class="tagi">V1 prototype works</span><span class="tagi">Private repository</span></div>
+    </header>
+
+    <section class="reveal">
+      <div class="sec-head"><span class="sec-n">01</span><h2 class="l-uk">Що я хочу</h2><h2 class="l-ru">Что я хочу</h2><h2 class="l-en">What I want</h2></div>
+      <div class="card">
+        <div class="l-uk">
+          <p class="lead-line"><strong>AI-коуч підтримки між сесіями.</strong> Не чат-порадник, а <strong>дзеркало</strong>: він не відповідає на питання, а ставить їх — так, як це роблю я в коучингу. Клієнт працює з ним щодня між живими сесіями зі мною.</p>
+          <p><strong>Бізнес-логіка.</strong> AI — не кінцевий продукт, а <strong>вхідна воронка в живий коучинг</strong>. Людина спілкується з AI, на певній глибині впирається в межу («а чому саме Я?») — і сама хоче живу зустріч. Дешева підписка як вхід у дорогий контракт.</p>
+          <p><strong>Найближча мета.</strong> Довести на 10–30 своїх клієнтах, що це працює (закрита бета, 3 місяці). Не «платформа для всіх» — одна задача.</p>
+        </div>
+        <div class="l-ru">
+          <p class="lead-line"><strong>AI-коуч поддержки между сессиями.</strong> Не чат-советчик, а <strong>зеркало</strong>: он не отвечает на вопросы, а задаёт их — так, как это делаю я в коучинге. Клиент работает с ним каждый день между живыми сессиями со мной.</p>
+          <p><strong>Бизнес-логика.</strong> AI — не конечный продукт, а <strong>входная воронка в живой коучинг</strong>. Человек общается с AI, на определённой глубине упирается в границу («а почему именно Я?») — и сам хочет живую встречу. Дешёвая подписка как вход в дорогой контракт.</p>
+          <p><strong>Ближайшая цель.</strong> Доказать на 10–30 своих клиентах, что это работает (закрытая бета, 3 месяца). Не «платформа для всех» — одна задача.</p>
+        </div>
+        <div class="l-en">
+          <p class="lead-line"><strong>An AI coach for support between sessions.</strong> Not a chat-advisor but a <strong>mirror</strong>: it doesn't answer questions, it asks them — the way I do in coaching. The client works with it daily between our live sessions.</p>
+          <p><strong>Business logic.</strong> The AI isn't the end product — it's the <strong>top-of-funnel into live coaching</strong>. A person talks to the AI, at a certain depth hits a wall ("but why me?") — and wants a live session themselves. A cheap subscription as the entry to a high-ticket contract.</p>
+          <p><strong>Immediate goal.</strong> Prove it works on 10–30 of my own clients (closed beta, 3 months). Not a "platform for everyone" — one job.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="reveal">
+      <div class="sec-head"><span class="sec-n">02</span><h2 class="l-uk">Як я це уявляю</h2><h2 class="l-ru">Как я это представляю</h2><h2 class="l-en">How I picture it</h2></div>
+      <div class="card">
+        <dl class="kv l-uk">
+          <dt>Форма</dt><dd>Веб-застосунок (телефон + десктоп), не Telegram-бот. Стиль навчального продукту.</dd>
+          <dt>Стек</dt><dd><b>Next.js</b> (фронт) + <b>Supabase</b> (база, реєстрація, пам'ять) + <b>Claude API</b> (модель, без fine-tuning — уся «особистість» у системному промпті). Хостинг Vercel.</dd>
+          <dt>Пам'ять</dt><dd>Живе <b>зовні моделі</b>: у промпт іде не вся історія чату, а структурований стан клієнта («жива анкета»: точка А, теми, етап) + резюме. Щоб не роздувати контекст і тримати якість.</dd>
+          <dt>Два входи</dt><dd>Клієнтський застосунок + окрема <b>консоль для коуча</b> (бачу своїх людей, додаю контекст живих сесій).</dd>
+          <dt>Ризик, який я бачу</dt><dd>Ізоляція даних між клієнтами (<b>RLS</b>) — клієнт А не має бачити клієнта Б. Хочу, щоб досвідчена людина це перевірила перед реальними людьми.</dd>
+          <dt>Спосіб</dt><dd>Збірка вайбкодингом (я не програміст), розкладена на 7 етапів від голосу до бети.</dd>
+        </dl>
+        <dl class="kv l-ru">
+          <dt>Форма</dt><dd>Веб-приложение (телефон + десктоп), не Telegram-бот. Стиль обучающего продукта.</dd>
+          <dt>Стек</dt><dd><b>Next.js</b> (фронт) + <b>Supabase</b> (база, регистрация, память) + <b>Claude API</b> (модель, без fine-tuning — вся «личность» в системном промпте). Хостинг Vercel.</dd>
+          <dt>Память</dt><dd>Живёт <b>вне модели</b>: в промпт идёт не вся история чата, а структурированное состояние клиента («живая анкета»: точка А, темы, этап) + резюме. Чтобы не раздувать контекст и держать качество.</dd>
+          <dt>Два входа</dt><dd>Клиентское приложение + отдельная <b>консоль для коуча</b> (вижу своих людей, добавляю контекст живых сессий).</dd>
+          <dt>Риск, который я вижу</dt><dd>Изоляция данных между клиентами (<b>RLS</b>) — клиент А не должен видеть клиента Б. Хочу, чтобы опытный человек это проверил перед реальными людьми.</dd>
+          <dt>Способ</dt><dd>Сборка вайбкодингом (я не программист), разложена на 7 этапов от голоса до беты.</dd>
+        </dl>
+        <dl class="kv l-en">
+          <dt>Form</dt><dd>Web app (phone + desktop), not a Telegram bot. In the style of a learning product.</dd>
+          <dt>Stack</dt><dd><b>Next.js</b> (frontend) + <b>Supabase</b> (database, auth, memory) + <b>Claude API</b> (model, no fine-tuning — the whole "personality" lives in the system prompt). Hosted on Vercel.</dd>
+          <dt>Memory</dt><dd>Lives <b>outside the model</b>: the prompt gets not the whole chat history but a structured client state (a "living profile": point A, themes, stage) + summaries. To keep context small and quality high.</dd>
+          <dt>Two entrances</dt><dd>A client app + a separate <b>coach console</b> (I see my people, add context from live sessions).</dd>
+          <dt>The risk I see</dt><dd>Data isolation between clients (<b>RLS</b>) — client A must never see client B. I want an experienced person to check this before real users.</dd>
+          <dt>Approach</dt><dd>Built by vibe-coding (I'm not a programmer), broken into 7 stages from voice to beta.</dd>
+        </dl>
+      </div>
+    </section>
+
+    <section class="reveal">
+      <div class="sec-head"><span class="sec-n">03</span><h2 class="l-uk">Що вже зроблено</h2><h2 class="l-ru">Что уже сделано</h2><h2 class="l-en">What's already done</h2></div>
+      <div class="card">
+        <ul class="clean l-uk">
+          <li><b>Три глибокі дослідження</b> — ринок AI-коучів (11+ конкурентів), технічний стек, гранти. Рішення ухвалені, не гадаю на ходу.</li>
+          <li><b>Робочий прототип V1</b> — чат із Claude українською в режимі підтримки + захисний <b>SAFE PATH</b> (стоп-скринінг кризових сигналів → переадресація до фахівця). Перевірено.</li>
+          <li><b>Цифровий голос</b> — мій Tone of Voice (верифікований документ) вшитий у системний промпт: правила, лексика, табу, приклади.</li>
+          <li><b>База даних</b> — спроєктована схема Supabase (клієнти, повідомлення, «жива анкета», резюме сесій, прапорці) з увімкненим RLS. Серверний клієнт написаний.</li>
+          <li><b>Інфраструктура</b> — приватні репозиторії з ліцензією «всі права застережено», повний план збірки (7 етапів) з критеріями готовності кожного.</li>
+        </ul>
+        <ul class="clean l-ru">
+          <li><b>Три глубоких исследования</b> — рынок AI-коучей (11+ конкурентов), технический стек, гранты. Решения приняты, не гадаю на ходу.</li>
+          <li><b>Рабочий прототип V1</b> — чат с Claude на украинском в режиме поддержки + защитный <b>SAFE PATH</b> (стоп-скрининг кризисных сигналов → переадресация к специалисту). Проверено.</li>
+          <li><b>Цифровой голос</b> — мой Tone of Voice (верифицированный документ) вшит в системный промпт: правила, лексика, табу, примеры.</li>
+          <li><b>База данных</b> — спроектирована схема Supabase (клиенты, сообщения, «живая анкета», резюме сессий, флаги) с включённым RLS. Серверный клиент написан.</li>
+          <li><b>Инфраструктура</b> — приватные репозитории с лицензией «все права защищены», полный план сборки (7 этапов) с критериями готовности каждого.</li>
+        </ul>
+        <ul class="clean l-en">
+          <li><b>Three deep-research reports</b> — the AI-coach market (11+ competitors), the tech stack, grants. Decisions are made, not guessed on the fly.</li>
+          <li><b>A working V1 prototype</b> — a Claude chat in Ukrainian in support mode + a protective <b>SAFE PATH</b> (crisis-signal stop-screening → referral to a specialist). Tested.</li>
+          <li><b>A digital voice</b> — my Tone of Voice (a verified document) embedded in the system prompt: rules, vocabulary, taboos, examples.</li>
+          <li><b>A database</b> — a designed Supabase schema (clients, messages, "living profile", session summaries, flags) with RLS enabled. The server client is written.</li>
+          <li><b>Infrastructure</b> — private repositories with an "All Rights Reserved" license, a full build plan (7 stages) with a done-criterion for each.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="reveal">
+      <div class="sec-head"><span class="sec-n">04</span><h2 class="l-uk">Дорожня карта збірки</h2><h2 class="l-ru">Дорожная карта сборки</h2><h2 class="l-en">Build roadmap</h2></div>
+      <div class="card">
+        <div class="stages l-uk">
+          <div class="stage"><span class="idx">0</span><span><b class="b0">Розблокування</b><span class="s0">Ключі Anthropic + проєкт Supabase (дія Іри, ~15 хв)</span></span><span class="chip wait">чекає</span></div>
+          <div class="stage"><span class="idx">1</span><span><b class="b0">Голос Іри в промпті</b><span class="s0">Tone of Voice вшито · чекає валідації діалогів</span></span><span class="chip done">готово</span></div>
+          <div class="stage here"><span class="idx">2</span><span><b class="b0">Пам'ять (Supabase)</b><span class="s0">Схема БД + серверний клієнт готові · треба підключити й застосувати</span></span><span class="chip wip">в роботі</span></div>
+          <div class="stage"><span class="idx">3</span><span><b class="b0">Режими розмови</b><span class="s0">Знайомство → кваліфікація → підтримка → рефлексія → місток</span></span><span class="chip wait">далі</span></div>
+          <div class="stage"><span class="idx">4</span><span><b class="b0">Коуч-консоль Іри</b><span class="s0">Список клієнтів, картка, підсумки живих сесій</span></span><span class="chip wait">далі</span></div>
+          <div class="stage"><span class="idx">5</span><span><b class="b0">Онбординг + деплой</b><span class="s0">Екрани, згода на дані, Vercel</span></span><span class="chip wait">далі</span></div>
+          <div class="stage"><span class="idx">6</span><span><b class="b0">Закрита бета</b><span class="s0">10–30 своїх · 3 місяці · перевірка безпеки перед стартом</span></span><span class="chip wait">далі</span></div>
+          <div class="stage"><span class="idx">7</span><span><b class="b0">Запуск</b><span class="s0">Маркетинг + гроші (гранти, ТОВ) — після бети</span></span><span class="chip wait">далі</span></div>
+        </div>
+        <div class="stages l-ru">
+          <div class="stage"><span class="idx">0</span><span><b class="b0">Разблокировка</b><span class="s0">Ключи Anthropic + проект Supabase (действие Иры, ~15 мин)</span></span><span class="chip wait">ждёт</span></div>
+          <div class="stage"><span class="idx">1</span><span><b class="b0">Голос Иры в промпте</b><span class="s0">Tone of Voice вшит · ждёт валидации диалогов</span></span><span class="chip done">готово</span></div>
+          <div class="stage here"><span class="idx">2</span><span><b class="b0">Память (Supabase)</b><span class="s0">Схема БД + серверный клиент готовы · нужно подключить и применить</span></span><span class="chip wip">в работе</span></div>
+          <div class="stage"><span class="idx">3</span><span><b class="b0">Режимы разговора</b><span class="s0">Знакомство → квалификация → поддержка → рефлексия → мостик</span></span><span class="chip wait">далее</span></div>
+          <div class="stage"><span class="idx">4</span><span><b class="b0">Коуч-консоль Иры</b><span class="s0">Список клиентов, карточка, итоги живых сессий</span></span><span class="chip wait">далее</span></div>
+          <div class="stage"><span class="idx">5</span><span><b class="b0">Онбординг + деплой</b><span class="s0">Экраны, согласие на данные, Vercel</span></span><span class="chip wait">далее</span></div>
+          <div class="stage"><span class="idx">6</span><span><b class="b0">Закрытая бета</b><span class="s0">10–30 своих · 3 месяца · проверка безопасности перед стартом</span></span><span class="chip wait">далее</span></div>
+          <div class="stage"><span class="idx">7</span><span><b class="b0">Запуск</b><span class="s0">Маркетинг + деньги (гранты, ООО) — после беты</span></span><span class="chip wait">далее</span></div>
+        </div>
+        <div class="stages l-en">
+          <div class="stage"><span class="idx">0</span><span><b class="b0">Unblock</b><span class="s0">Anthropic key + Supabase project (Ira's action, ~15 min)</span></span><span class="chip wait">waiting</span></div>
+          <div class="stage"><span class="idx">1</span><span><b class="b0">Ira's voice in the prompt</b><span class="s0">Tone of Voice embedded · awaiting dialogue validation</span></span><span class="chip done">done</span></div>
+          <div class="stage here"><span class="idx">2</span><span><b class="b0">Memory (Supabase)</b><span class="s0">DB schema + server client ready · needs wiring &amp; applying</span></span><span class="chip wip">in progress</span></div>
+          <div class="stage"><span class="idx">3</span><span><b class="b0">Conversation modes</b><span class="s0">Onboarding → qualification → support → reflection → handoff</span></span><span class="chip wait">next</span></div>
+          <div class="stage"><span class="idx">4</span><span><b class="b0">Ira's coach console</b><span class="s0">Client list, profile card, live-session summaries</span></span><span class="chip wait">next</span></div>
+          <div class="stage"><span class="idx">5</span><span><b class="b0">Onboarding + deploy</b><span class="s0">Screens, data consent, Vercel</span></span><span class="chip wait">next</span></div>
+          <div class="stage"><span class="idx">6</span><span><b class="b0">Closed beta</b><span class="s0">10–30 of my own · 3 months · security check before launch</span></span><span class="chip wait">next</span></div>
+          <div class="stage"><span class="idx">7</span><span><b class="b0">Launch</b><span class="s0">Marketing + money (grants, legal entity) — after beta</span></span><span class="chip wait">next</span></div>
+        </div>
+        <p class="milestone l-uk">◆ <b>Етап&nbsp;6</b> — точка, де реальний клієнт починає користуватися AI-підтримкою.</p>
+        <p class="milestone l-ru">◆ <b>Этап&nbsp;6</b> — точка, где реальный клиент начинает пользоваться AI-поддержкой.</p>
+        <p class="milestone l-en">◆ <b>Stage&nbsp;6</b> — the point where a real client starts using the AI support.</p>
+      </div>
+    </section>
+
+    <section class="reveal">
+      <div class="sec-head"><span class="sec-n">05</span><h2 class="l-uk">Документи проєкту</h2><h2 class="l-ru">Документы проекта</h2><h2 class="l-en">Project documents</h2></div>
+      <div class="grid">
+
+        <div class="grp">
+          <h3 class="l-uk">План та навігація</h3><h3 class="l-ru">План и навигация</h3><h3 class="l-en">Plan &amp; navigation</h3>
+          <p class="grp-sub l-uk">Куди рухаємось і як влаштована робота</p><p class="grp-sub l-ru">Куда движемся и как устроена работа</p><p class="grp-sub l-en">Where we're going and how the work is organized</p>
+          <div class="links">
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/00-plan-roboty/README.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">Майстер-план (7 етапів)</span><span class="l-ru">Мастер-план (7 этапов)</span><span class="l-en">Master plan (7 stages)</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/02-technical/README.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">Технічний трек</span><span class="l-ru">Технический трек</span><span class="l-en">Technical track</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/02-technical/JOURNAL.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">Журнал технічної роботи</span><span class="l-ru">Журнал технической работы</span><span class="l-en">Technical work journal</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/HANDOFF.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">HANDOFF — повний контекст</span><span class="l-ru">HANDOFF — полный контекст</span><span class="l-en">HANDOFF — full context</span></span><span class="ext">↗</span></a>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3 class="l-uk">Код · те, що вже працює</h3><h3 class="l-ru">Код · то, что уже работает</h3><h3 class="l-en">Code · what already works</h3>
+          <p class="grp-sub l-uk">Прототип V1 і фундамент пам'яті</p><p class="grp-sub l-ru">Прототип V1 и фундамент памяти</p><p class="grp-sub l-en">V1 prototype and the memory foundation</p>
+          <div class="links">
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/lib/prompt.js" target="_blank" rel="noopener"><span class="kind code">js</span><span class="doc-name"><span class="l-uk">Системний промпт (голос Іри)</span><span class="l-ru">Системный промпт (голос Иры)</span><span class="l-en">System prompt (Ira's voice)</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/supabase/migrations/0001_init_schema.sql" target="_blank" rel="noopener"><span class="kind code">sql</span><span class="doc-name"><span class="l-uk">Схема бази даних</span><span class="l-ru">Схема базы данных</span><span class="l-en">Database schema</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/lib/supabase.js" target="_blank" rel="noopener"><span class="kind code">js</span><span class="doc-name"><span class="l-uk">Серверний клієнт Supabase</span><span class="l-ru">Серверный клиент Supabase</span><span class="l-en">Supabase server client</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/app/api/chat/route.js" target="_blank" rel="noopener"><span class="kind code">js</span><span class="doc-name"><span class="l-uk">Бекенд чату + SAFE PATH</span><span class="l-ru">Бэкенд чата + SAFE PATH</span><span class="l-en">Chat backend + SAFE PATH</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/app/page.js" target="_blank" rel="noopener"><span class="kind code">js</span><span class="doc-name"><span class="l-uk">Чат-інтерфейс</span><span class="l-ru">Чат-интерфейс</span><span class="l-en">Chat interface</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/02-technical/voice-validation-v1.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">Тестові діалоги (валідація голосу)</span><span class="l-ru">Тестовые диалоги (валидация голоса)</span><span class="l-en">Test dialogues (voice validation)</span></span><span class="ext">↗</span></a>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3 class="l-uk">Архітектура та стратегія</h3><h3 class="l-ru">Архитектура и стратегия</h3><h3 class="l-en">Architecture &amp; strategy</h3>
+          <p class="grp-sub l-uk">docs/ — пряма вивантажена документація</p><p class="grp-sub l-ru">docs/ — прямая выгруженная документация</p><p class="grp-sub l-en">docs/ — directly exported documentation</p>
+          <div class="links">
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/docs/08-arhitektura-mvp-v1.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">⭐ Архітектура MVP V1</span><span class="l-ru">⭐ Архитектура MVP V1</span><span class="l-en">⭐ MVP V1 architecture</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/docs/README.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">Індекс усіх документів</span><span class="l-ru">Индекс всех документов</span><span class="l-en">Index of all documents</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/docs/01-dnk-klienta-v2.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">ДНК Клієнта v2 (аватари)</span><span class="l-ru">ДНК Клиента v2 (аватары)</span><span class="l-en">Client DNA v2 (personas)</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/docs/00-dnk-biznesu.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">ДНК Бізнесу</span><span class="l-ru">ДНК Бизнеса</span><span class="l-en">Business DNA</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/docs/04-drabyna-hanta.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">Драбина Ханта (GTM)</span><span class="l-ru">Лестница Ханта (GTM)</span><span class="l-en">Hunt's ladder (GTM)</span></span><span class="ext">↗</span></a>
+          </div>
+        </div>
+
+        <div class="grp">
+          <h3 class="l-uk">Дослідження</h3><h3 class="l-ru">Исследования</h3><h3 class="l-en">Research</h3>
+          <p class="grp-sub l-uk">research/ — три Deep Research + джерела</p><p class="grp-sub l-ru">research/ — три Deep Research + источники</p><p class="grp-sub l-en">research/ — three Deep Research reports + sources</p>
+          <div class="links">
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/research/deepresearch/ai-coach-tech-stack-2026/ch4_synthesis.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">№2 Технічний стек · синтез</span><span class="l-ru">№2 Технический стек · синтез</span><span class="l-en">#2 Tech stack · synthesis</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/research/deepresearch/unlocking-ai-coaching-2026-2027/README.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">№1 Ринок AI-коучингу</span><span class="l-ru">№1 Рынок AI-коучинга</span><span class="l-en">#1 AI-coaching market</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/research/deepresearch/grants-ai-coach-2026/README.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">№3 Гранти та фінансування</span><span class="l-ru">№3 Гранты и финансирование</span><span class="l-en">#3 Grants &amp; funding</span></span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/research/sources/src-20260703-tone-of-voice-ira-ank/tone-of-voice-ira-ank.md" target="_blank" rel="noopener"><span class="doc-name">Tone of Voice v2.1</span><span class="ext">↗</span></a>
+            <a class="doc" href="https://github.com/iraank/ai-coach-unlocking/blob/main/research/sources/src-20260704-ai-coach-user-flow/content.md" target="_blank" rel="noopener"><span class="doc-name"><span class="l-uk">Клієнтський флоу 0–7</span><span class="l-ru">Клиентский флоу 0–7</span><span class="l-en">Client flow 0–7</span></span><span class="ext">↗</span></a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="reveal">
+      <div class="sec-head"><span class="sec-n">06</span><h2 class="l-uk">Що я хочу від зустрічі</h2><h2 class="l-ru">Что я хочу от встречи</h2><h2 class="l-en">What I want from the meeting</h2></div>
+      <div class="ask">
+        <div class="l-uk">
+          <p class="ask-lead">Це разова консультація. Найцінніше для мене — <b>чесна критика, а не ввічливість</b>. Не пом'якшуй. Два окремі пункти — не змішуй їх, це різні речі.</p>
+          <p style="margin:18px 0 8px;color:var(--gold);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;">Пункт 1 — AI Coach Unlocker</p>
+          <ul>
+            <li><b>Як тобі сама ідея?</b> Чесно: AI-коуч такого типу має сенс — чи це дурня, на яку не варто витрачати час?</li>
+            <li><b>Що ти думаєш про такі застосунки взагалі</b> — про AI-підтримку між живими сесіями?</li>
+            <li><b>Перевір архітектуру</b> — насамперед ізоляцію даних клієнтів (RLS): чи немає дір.</li>
+            <li><b>Де я недооцінюю складність, а де перемудрюю.</b></li>
+            <li><b>Чи реально мені зібрати це самій</b> вайбкодингом до робочого продукту — чи я себе обманюю.</li>
+            <li><b>Разова перевірка безпеки</b> перед бетою — якщо тобі це цікаво.</li>
+          </ul>
+          <p style="margin:22px 0 8px;color:var(--gold);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;">Пункт 2 — Life OS (окрема тема)</p>
+          <p>Це не про AI Coach. У мене є ширша ідея — <b>одна система на весь мій світ</b>: бізнес, клієнти, контент, фінанси, особисте — не окремі інструменти, а одна операційка. Я поки чесно <b>не знаю, як це перевести в AI</b> — ні архітектурно, ні з чого почати. Не чекаю рішення на місці, хочу просто почути твою першу реакцію: це взагалі реалістична ідея, чи я намагаюсь з'їсти слона одним укусом?</p>
+          <p style="margin:22px 0 8px;color:var(--gold);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;">Пункт 3 — зоопарк агентів</p>
+          <p>У мене вже є ціла купа налаштованих AI-агентів і скілів — включно з окремим (Гермес), який я налаштувала, але так і не почала користуватись. Проблема не в тому, що їх мало — їх забагато, і <b>немає системи</b>, яка каже, коли який використовувати і як вони мають працювати разом. Хочу почути: чи є в цьому взагалі порядок, який можна навести, чи це нормально, що частина інструментів просто лежить невживана?</p>
+          <p class="ask-end">Поки що це просто консультація. Якщо відгукнеться щось більше — буду рада, але без тиску.</p>
+        </div>
+        <div class="l-ru">
+          <p class="ask-lead">Это разовая консультация. Самое ценное для меня — <b>честная критика, а не вежливость</b>. Не смягчай. Два отдельных пункта — не смешивай их, это разные вещи.</p>
+          <p style="margin:18px 0 8px;color:var(--gold);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;">Пункт 1 — AI Coach Unlocker</p>
+          <ul>
+            <li><b>Как тебе сама идея?</b> Честно: AI-коуч такого типа имеет смысл — или это ерунда, на которую не стоит тратить время?</li>
+            <li><b>Что ты думаешь о таких приложениях вообще</b> — об AI-поддержке между живыми сессиями?</li>
+            <li><b>Проверь архитектуру</b> — прежде всего изоляцию данных клиентов (RLS): нет ли дыр.</li>
+            <li><b>Где я недооцениваю сложность, а где перемудриваю.</b></li>
+            <li><b>Реально ли мне собрать это самой</b> вайбкодингом до рабочего продукта — или я себя обманываю.</li>
+            <li><b>Разовая проверка безопасности</b> перед бетой — если тебе интересно.</li>
+          </ul>
+          <p style="margin:22px 0 8px;color:var(--gold);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;">Пункт 2 — Life OS (отдельная тема)</p>
+          <p>Это не про AI Coach. У меня есть более широкая идея — <b>одна система на весь мой мир</b>: бизнес, клиенты, контент, финансы, личное — не отдельные инструменты, а одна операционка. Я пока честно <b>не знаю, как это перевести в AI</b> — ни архитектурно, ни с чего начать. Не жду решения на месте, хочу просто услышать твою первую реакцию: это вообще реалистичная идея, или я пытаюсь съесть слона одним укусом?</p>
+          <p style="margin:22px 0 8px;color:var(--gold);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;">Пункт 3 — зоопарк агентов</p>
+          <p>У меня уже есть целая куча настроенных AI-агентов и скиллов — включая отдельный (Гермес), который я настроила, но так и не начала им пользоваться. Проблема не в том, что их мало — их слишком много, и <b>нет системы</b>, которая говорит, когда какой использовать и как они должны работать вместе. Хочу услышать: есть ли в этом вообще порядок, который можно навести, или это нормально, что часть инструментов просто лежит невостребованной?</p>
+          <p class="ask-end">Пока это просто консультация. Если откликнется что-то большее — буду рада, но без давления.</p>
+        </div>
+        <div class="l-en">
+          <p class="ask-lead">This is a one-off consultation. What I value most is <b>honest criticism, not politeness</b>. Don't soften it. Two separate points — don't mix them, they're different things.</p>
+          <p style="margin:18px 0 8px;color:var(--gold);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;">Point 1 — AI Coach Unlocker</p>
+          <ul>
+            <li><b>What do you make of the idea itself?</b> Honestly: does an AI coach like this make sense — or is it nonsense not worth the time?</li>
+            <li><b>What do you think of these apps in general</b> — AI support between live sessions?</li>
+            <li><b>Review the architecture</b> — above all client data isolation (RLS): any holes?</li>
+            <li><b>Where do I underestimate the complexity, and where do I overengineer?</b></li>
+            <li><b>Can I realistically build this myself</b> by vibe-coding into a working product — or am I fooling myself?</li>
+            <li><b>A one-off security check</b> before the beta — if that interests you.</li>
+          </ul>
+          <p style="margin:22px 0 8px;color:var(--gold);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;">Point 2 — Life OS (a separate topic)</p>
+          <p>This isn't about AI Coach. I have a wider idea — <b>one system for my entire world</b>: business, clients, content, finances, personal life — not separate tools, one operating system. I honestly <b>don't know how to turn this into AI</b> yet — not the architecture, not where to start. I'm not expecting an answer on the spot — I just want your first reaction: is this a realistic idea at all, or am I trying to eat an elephant in one bite?</p>
+          <p style="margin:22px 0 8px;color:var(--gold);font-weight:700;font-size:13px;letter-spacing:.05em;text-transform:uppercase;">Point 3 — the agent zoo</p>
+          <p>I already have a whole pile of configured AI agents and skills — including a separate one (Hermes) that I set up but never actually started using. The problem isn't that there are too few — there are too many, and there's <b>no system</b> telling me when to use which one and how they're supposed to work together. I want to hear: is there an order that can actually be brought to this, or is it normal for part of a toolset to just sit unused?</p>
+          <p class="ask-end">For now this is just a consultation. If something bigger resonates for you — I'd be glad, but no pressure.</p>
+        </div>
+      </div>
+      <p class="note l-uk"><b>Костянтине, для доступу до файлів:</b> репозиторій приватний. Щоб посилання відкривались — Іра додасть Вас як collaborator на GitHub, або дивимось разом на зустрічі.</p>
+      <p class="note l-ru"><b>Константин, для доступа к файлам:</b> репозиторий приватный. Чтобы ссылки открывались — Ира добавит Вас как collaborator на GitHub, или смотрим вместе на встрече.</p>
+      <p class="note l-en"><b>Konstantin, to access the files:</b> the repository is private. For the links to open, Ira will add you as a collaborator on GitHub, or we review them together at the meeting.</p>
+    </section>
+
+    <section class="reveal">
+      <div class="sec-head"><span class="sec-n">07</span><h2 class="l-uk">Інвестиційний висновок</h2><h2 class="l-ru">Инвестиционный вывод</h2><h2 class="l-en">Investor verdict</h2></div>
+      <div class="card">
+        <div class="l-uk">
+          <p class="lead-line">Це не «AI-чат», а <strong>воронка в живий коучинг</strong> з маржею ~85% і готовою теплою аудиторією для валідації.</p>
+          <p><strong>Що витримало перевірку:</strong></p>
+          <ul class="clean">
+            <li><b>Дзеркало, не порадник</b> — відрізняється від безкоштовного ChatGPT методологією, пам'яттю і живою Ірою в кінці.</li>
+            <li><b>Актив — не години Іри</b>, а інфраструктура методу (масштаб на ~50 анлокерів школи).</li>
+            <li><b>Юніт-економіка:</b> маржа ~85–90%, собівартість клієнта $1.5–4/міс; продукт сам оплачує залучення в high-ticket.</li>
+            <li><b>Валідація дешева:</b> перші бета-клієнти вже є (теплі), kill-критерій названий.</li>
+          </ul>
+          <p class="note"><b>Чесні ризики:</b> метод — IP школи Ісаєва (масштаб на партнерів потребує його згоди); нуль traction — усе доводиться бетою; CAC ще не виміряний — реклама вмикається лише після тесту.</p>
+          <p><strong>Вердикт:</strong> стадія pre-seed / грант. Запит — не «гроші на трафік», а ресурс довести економіку на власних клієнтах. Готовність до розмови — так, з чесним «що вже є / чого ще нема».</p>
+        </div>
+        <div class="l-ru">
+          <p class="lead-line">Это не «AI-чат», а <strong>воронка в живой коучинг</strong> с маржой ~85% и готовой тёплой аудиторией для валидации.</p>
+          <p><strong>Что выдержало проверку:</strong></p>
+          <ul class="clean">
+            <li><b>Зеркало, не советчик</b> — отличается от бесплатного ChatGPT методологией, памятью и живой Ирой в конце.</li>
+            <li><b>Актив — не часы Иры</b>, а инфраструктура метода (масштаб на ~50 анлокеров школы).</li>
+            <li><b>Юнит-экономика:</b> маржа ~85–90%, себестоимость клиента $1.5–4/мес; продукт сам оплачивает привлечение в high-ticket.</li>
+            <li><b>Валидация дешёвая:</b> первые бета-клиенты уже есть (тёплые), kill-критерий назван.</li>
+          </ul>
+          <p class="note"><b>Честные риски:</b> метод — IP школы Исаева (масштаб на партнёров требует его согласия); ноль traction — всё доказывается бетой; CAC ещё не измерен — реклама включается только после теста.</p>
+          <p><strong>Вердикт:</strong> стадия pre-seed / грант. Запрос — не «деньги на трафик», а ресурс доказать экономику на своих клиентах. Готовность к разговору — да, с честным «что уже есть / чего ещё нет».</p>
+        </div>
+        <div class="l-en">
+          <p class="lead-line">This isn't an "AI chat" — it's a <strong>funnel into live coaching</strong> with ~85% margin and a ready warm audience to validate on.</p>
+          <p><strong>What survived the grilling:</strong></p>
+          <ul class="clean">
+            <li><b>A mirror, not an advisor</b> — differs from free ChatGPT by methodology, memory, and a live Ira at the end.</li>
+            <li><b>The asset isn't Ira's hours</b> — it's the method's infrastructure (scaling to ~50 unlocker coaches).</li>
+            <li><b>Unit economics:</b> ~85–90% margin, $1.5–4 per client/month; the product pays for its own high-ticket acquisition.</li>
+            <li><b>Cheap validation:</b> the first beta clients already exist (warm); the kill-criterion is stated.</li>
+          </ul>
+          <p class="note"><b>Honest risks:</b> the method is Isaiev's school IP (scaling to partners needs his consent); zero traction — everything is proven by the beta; CAC not yet measured — ads switch on only after the test.</p>
+          <p><strong>Verdict:</strong> pre-seed / grant stage. The ask isn't "money for traffic" but the resources to prove the economics on my own clients. Ready to talk — yes, with an honest "what's here / what's not yet."</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span>AI Coach Unlocker</span>
+      <span class="dot">·</span>
+      <span class="l-uk">Іра Анк · метод Unlocking</span><span class="l-ru">Ира Анк · метод Unlocking</span><span class="l-en">Ira Ank · the Unlocking method</span>
+      <span class="dot">·</span>
+      <a href="https://github.com/iraank/ai-coach-unlocking" target="_blank" rel="noopener">github.com/iraank/ai-coach-unlocking</a>
+      <span class="dot">·</span>
+      <span>All Rights Reserved</span>
+    </footer>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var page = document.querySelector('.page');
+    var tg = document.getElementById('tg');
+    function applyTheme(t){ root.setAttribute('data-theme', t); try{ localStorage.setItem('rk-theme', t);}catch(e){} }
+    var savedT; try { savedT = localStorage.getItem('rk-theme'); } catch(e){}
+    if (savedT) applyTheme(savedT);
+    tg.addEventListener('click', function(){
+      var cur = root.getAttribute('data-theme');
+      if (!cur) cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      applyTheme(cur === 'dark' ? 'light' : 'dark');
+    });
+
+    var btns = document.querySelectorAll('.langs button');
+    function applyLang(l){
+      page.setAttribute('data-lang', l);
+      btns.forEach(function(b){ b.classList.toggle('on', b.dataset.set === l); });
+      try{ localStorage.setItem('rk-lang', l);}catch(e){}
+    }
+    var savedL; try { savedL = localStorage.getItem('rk-lang'); } catch(e){}
+    if (savedL) applyLang(savedL);
+    btns.forEach(function(b){ b.addEventListener('click', function(){ applyLang(b.dataset.set); }); });
+  })();
+</script>
